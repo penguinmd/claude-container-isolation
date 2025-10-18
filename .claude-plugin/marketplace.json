@@ -8,7 +8,10 @@
   "plugins": [
     {
       "name": "container-isolation",
-      "source": "./",
+      "source": {
+        "source": "url",
+        "url": "https://github.com/penguinmd/claude-container-isolation.git"
+      },
       "description": "Create secure, isolated development environments using Apple Container technology",
       "version": "1.0.0",
       "author": {
