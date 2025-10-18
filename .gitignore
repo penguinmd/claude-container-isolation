@@ -1,0 +1,7 @@
+# Test artifacts
+tests/test-output/
+*.log
+
+# Temporary files
+*.tmp
+.DS_Store
