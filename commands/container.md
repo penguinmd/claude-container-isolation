@@ -13,16 +13,16 @@ MultiSelect: false
 
 Options:
 1. Label: "Set up new environment"
-   Description: "Create a new isolated container environment (Playground/Development/Custom mode)"
+   Description: "Create and configure a new isolated container (choose from Playground/Development/Custom modes)"
 
 2. Label: "Check status"
-   Description: "View current container status and configuration"
+   Description: "View current container status, resource usage, and configuration"
 
 3. Label: "Open shell"
-   Description: "Enter an interactive shell session in the running container"
+   Description: "Open an interactive terminal session (auto-starts container if stopped)"
 
-4. Label: "Stop container"
-   Description: "Stop the running container (preserves data)"
+4. Label: "Manage container"
+   Description: "Stop, restart, or permanently destroy the container environment"
 ```
 
 ## Based on User Selection:
@@ -67,9 +67,31 @@ If the script doesn't exist, inform the user that the container isolation enviro
 
 Note: This will open an interactive shell session. The user will be inside the container and can run commands there. They should type `exit` when done to return to the host system.
 
-### If "Stop container":
-Stop the running container isolation environment for this project.
+### If "Manage container":
+Present a sub-menu for container lifecycle management operations.
 
+Use the AskUserQuestion tool to present the following sub-menu:
+
+```
+Question: "What container management operation would you like to perform?"
+Header: "Manage"
+MultiSelect: false
+
+Options:
+1. Label: "Stop container"
+   Description: "Stop the running container to free resources (all data is preserved)"
+
+2. Label: "Restart container"
+   Description: "Restart the container to apply configuration changes or recover from errors"
+
+3. Label: "Destroy environment"
+   Description: "Permanently remove the container and all its data (cannot be undone)"
+
+4. Label: "Go back"
+   Description: "Return to the main container menu"
+```
+
+#### If user selects "Stop container":
 Look for the container management script at `./scripts/container` and run the stop command.
 
 If the script exists:
@@ -81,4 +103,30 @@ If the script doesn't exist, inform the user that the container isolation enviro
 
 Note: Stopping the container preserves all data in volumes. The container can be restarted later with `./scripts/container start` or by selecting "Open shell" from the menu.
 
-If the user wants to completely remove the container and all its data, they should use `./scripts/container destroy` instead (but warn them this is destructive).
+#### If user selects "Restart container":
+Look for the container management script at `./scripts/container` and restart the container.
+
+If the script exists:
+1. Check current status with `./scripts/container status`
+2. Run `./scripts/container restart` (or stop then start if restart command doesn't exist)
+3. Confirm the container has restarted successfully
+
+If the script doesn't exist, inform the user that the container isolation environment hasn't been set up yet.
+
+#### If user selects "Destroy environment":
+IMPORTANT: This is a destructive operation that cannot be undone. Always confirm with the user before proceeding.
+
+Look for the container management script at `./scripts/container` and run the destroy command.
+
+If the script exists:
+1. Warn the user: "⚠️  WARNING: This will permanently delete the container and ALL its data. This cannot be undone."
+2. Ask for explicit confirmation before proceeding
+3. If confirmed, run: `./scripts/container destroy`
+4. Confirm the container has been destroyed
+
+If the script doesn't exist, inform the user that no container environment is set up.
+
+Note: After destroying the environment, users can create a new one by selecting "Set up new environment" from the main menu.
+
+#### If user selects "Go back":
+Return to the main container menu by presenting it again.
