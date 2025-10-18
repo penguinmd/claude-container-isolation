@@ -36,7 +36,7 @@ RUN apk add --no-cache \
     coreutils
 
 # Install Claude Code CLI
-RUN curl -fsSL https://claude.ai/install.sh | sh
+RUN curl -fsSL https://claude.ai/install.sh | bash
 
 # Optional language runtimes (commented out by default)
 # Uncomment the sections below to enable specific language support
