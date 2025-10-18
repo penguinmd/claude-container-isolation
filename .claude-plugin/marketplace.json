@@ -1,5 +1,5 @@
 {
-  "name": "Container Isolation Marketplace",
+  "name": "container-isolation-marketplace",
   "description": "Apple Container-based isolation tools for Claude Code",
   "owner": {
     "name": "penguinmd",
@@ -8,10 +8,13 @@
   "plugins": [
     {
       "name": "container-isolation",
-      "source": "https://github.com/penguinmd/claude-container-isolation.git",
+      "source": "./",
       "description": "Create secure, isolated development environments using Apple Container technology",
       "version": "1.0.0",
-      "author": "penguinmd"
+      "author": {
+        "name": "penguinmd",
+        "email": "myfourkids@gmail.com"
+      }
     }
   ],
   "strict": true
