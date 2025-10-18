@@ -1,225 +1,322 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Container management script for skills development environment
+# Container management script for Claude Code isolation
+# Uses Apple Container CLI (macOS 26+)
 # Commands: start, shell, stop, status, destroy
 
-CONTAINER_NAME="skills-dev"
-IMAGE_NAME="skills-dev:latest"
-DOCKERFILE_PATH="/Users/mdr/SynologyDrive/projects/skills/container-isolation/Dockerfile"
-PROJECT_ROOT="/Users/mdr/SynologyDrive/projects/skills"
-SCRIPTS_DIR="/Users/mdr/SynologyDrive/projects/skills/container-isolation/scripts"
+# Configuration - these will be set by the skill when generating the script
+CONTAINER_NAME="${CONTAINER_NAME:-claude-dev}"
+IMAGE_NAME="${IMAGE_NAME:-claude-dev:latest}"
+PROJECT_ROOT="${PROJECT_ROOT:-$(pwd)}"
 
 # Colors for output
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-NC='\033[0m' # No Color
+readonly RED='\033[0;31m'
+readonly GREEN='\033[0;32m'
+readonly YELLOW='\033[1;33m'
+readonly NC='\033[0m' # No Color
 
 log_info() {
-    echo -e "${GREEN}[INFO]${NC} $1"
+    echo -e "${GREEN}✓${NC} $1"
 }
 
 log_warn() {
-    echo -e "${YELLOW}[WARN]${NC} $1"
+    echo -e "${YELLOW}⚠${NC} $1"
 }
 
 log_error() {
-    echo -e "${RED}[ERROR]${NC} $1"
+    echo -e "${RED}✗${NC} $1" >&2
 }
 
-check_docker() {
-    if ! command -v docker &> /dev/null; then
-        log_error "Docker is not installed or not in PATH"
+# Check if Apple Container CLI is installed
+check_container_cli() {
+    if ! command -v container &> /dev/null; then
+        log_error "Apple Container CLI not found"
+        echo ""
+        echo "Install Apple Container:"
+        echo "  brew install --cask container"
+        echo ""
+        echo "Or download from:"
+        echo "  https://github.com/apple/container/releases"
         exit 1
     fi
 
-    if ! docker info &> /dev/null; then
-        log_error "Docker daemon is not running"
-        exit 1
+    # Check if system service is running
+    if ! container system status &> /dev/null; then
+        log_warn "Container system service not running"
+        log_info "Starting container system service..."
+        container system start || {
+            log_error "Failed to start container system service"
+            exit 1
+        }
     fi
 }
 
-build_image() {
-    log_info "Building Docker image..."
-    if ! docker build -t "$IMAGE_NAME" -f "$DOCKERFILE_PATH" "$PROJECT_ROOT"; then
-        log_error "Failed to build Docker image"
-        exit 1
-    fi
-    log_info "Docker image built successfully"
-}
+# Build image if it doesn't exist
+build_image_if_needed() {
+    # Note: 'container image ls' lists images
+    if ! container image ls 2>/dev/null | grep -q "$IMAGE_NAME"; then
+        log_info "Image not found, building from Containerfile..."
 
-start_container() {
-    check_docker
-
-    # Check if container already exists
-    if docker ps -a --format '{{.Names}}' | grep -q "^${CONTAINER_NAME}$"; then
-        if docker ps --format '{{.Names}}' | grep -q "^${CONTAINER_NAME}$"; then
-            log_warn "Container '$CONTAINER_NAME' is already running"
-            return 0
-        else
-            log_info "Starting existing container '$CONTAINER_NAME'..."
-            docker start "$CONTAINER_NAME"
-            log_info "Container started successfully"
-            return 0
+        local containerfile="${PROJECT_ROOT}/.claude-container/Containerfile"
+        if [[ ! -f "$containerfile" ]]; then
+            log_error "Containerfile not found at: $containerfile"
+            exit 1
         fi
+
+        container build -t "$IMAGE_NAME" -f "$containerfile" "$PROJECT_ROOT" || {
+            log_error "Failed to build image"
+            exit 1
+        }
+        log_info "Image built successfully"
     fi
-
-    # Check if image exists
-    if ! docker images --format '{{.Repository}}:{{.Tag}}' | grep -q "^${IMAGE_NAME}$"; then
-        log_warn "Image '$IMAGE_NAME' not found, building..."
-        build_image
-    fi
-
-    log_info "Creating and starting new container '$CONTAINER_NAME'..."
-
-    # Run container with volume mounts
-    docker run -d \
-        --name "$CONTAINER_NAME" \
-        --hostname skills-dev \
-        -v "${PROJECT_ROOT}:/workspace" \
-        -v "${HOME}/.claude:/root/.claude:ro" \
-        -w /workspace \
-        "$IMAGE_NAME"
-
-    log_info "Container '$CONTAINER_NAME' started successfully"
-
-    # Run initial setup
-    log_info "Running initial MCP setup..."
-    docker exec "$CONTAINER_NAME" /workspace/container-isolation/scripts/setup-mcp.sh
-
-    log_info "Syncing skills..."
-    docker exec "$CONTAINER_NAME" /workspace/container-isolation/scripts/sync-skills.sh
-
-    log_info "Setup complete! Use 'container shell' to access the container"
 }
 
-shell_container() {
-    check_docker
+cmd_start() {
+    check_container_cli
 
-    if ! docker ps --format '{{.Names}}' | grep -q "^${CONTAINER_NAME}$"; then
+    # Check if container already exists and is running
+    if container ps | grep -q "$CONTAINER_NAME"; then
+        log_warn "Container '$CONTAINER_NAME' is already running"
+        return 0
+    fi
+
+    # Check if container exists but is stopped
+    if container ps -a | grep -q "$CONTAINER_NAME"; then
+        log_info "Starting existing container..."
+        container start "$CONTAINER_NAME" || {
+            log_error "Failed to start container"
+            exit 1
+        }
+        log_info "Container started"
+        return 0
+    fi
+
+    # Build image if needed
+    build_image_if_needed
+
+    # Create and start new container
+    log_info "Creating new container..."
+
+    # Read configuration for volume mounts
+    local config_file="${PROJECT_ROOT}/.claude-container/config.json"
+
+    if [[ -f "$config_file" ]]; then
+        # Parse config for storage type
+        local storage_type=$(jq -r '.storage.type // "bind"' "$config_file" 2>/dev/null || echo "bind")
+
+        if [[ "$storage_type" == "bind" ]]; then
+            # Bind mount
+            container run -d \
+                --name "$CONTAINER_NAME" \
+                -v "${PROJECT_ROOT}:/workspace" \
+                -w /workspace \
+                "$IMAGE_NAME" || {
+                log_error "Failed to create container"
+                exit 1
+            }
+        else
+            # Named volume
+            local volume_name=$(jq -r '.storage.source // "claude-data"' "$config_file" 2>/dev/null || echo "claude-data")
+            container run -d \
+                --name "$CONTAINER_NAME" \
+                -v "${volume_name}:/workspace" \
+                -w /workspace \
+                "$IMAGE_NAME" || {
+                log_error "Failed to create container"
+                exit 1
+            }
+        fi
+    else
+        # Default: bind mount current directory
+        container run -d \
+            --name "$CONTAINER_NAME" \
+            -v "${PROJECT_ROOT}:/workspace" \
+            -w /workspace \
+            "$IMAGE_NAME" || {
+            log_error "Failed to create container"
+            exit 1
+        }
+    fi
+
+    log_info "Container created and started"
+
+    # Run initial setup if scripts exist
+    if [[ -f "${PROJECT_ROOT}/.claude-container/scripts/sync-skills.sh" ]]; then
+        log_info "Syncing Claude skills..."
+        container exec "$CONTAINER_NAME" /workspace/.claude-container/scripts/sync-skills.sh 2>/dev/null || true
+    fi
+
+    echo ""
+    log_info "Container '$CONTAINER_NAME' is ready!"
+    echo ""
+    echo "Next steps:"
+    echo "  • Enter container: $0 shell"
+    echo "  • Run Claude Code: $0 shell, then run 'claude'"
+    echo "  • Stop container: $0 stop"
+}
+
+cmd_shell() {
+    check_container_cli
+
+    if ! container ps | grep -q "$CONTAINER_NAME"; then
         log_error "Container '$CONTAINER_NAME' is not running"
-        log_info "Use 'container start' to start the container"
+        echo ""
+        echo "Start the container first:"
+        echo "  $0 start"
         exit 1
     fi
 
-    log_info "Opening shell in container '$CONTAINER_NAME'..."
-    docker exec -it "$CONTAINER_NAME" /bin/bash
+    log_info "Entering container shell..."
+    container exec -it "$CONTAINER_NAME" /bin/bash
 }
 
-stop_container() {
-    check_docker
+cmd_stop() {
+    check_container_cli
 
-    if ! docker ps --format '{{.Names}}' | grep -q "^${CONTAINER_NAME}$"; then
+    if ! container ps | grep -q "$CONTAINER_NAME"; then
         log_warn "Container '$CONTAINER_NAME' is not running"
         return 0
     fi
 
-    log_info "Stopping container '$CONTAINER_NAME'..."
-    docker stop "$CONTAINER_NAME"
-    log_info "Container stopped successfully"
+    log_info "Stopping container..."
+    container stop "$CONTAINER_NAME" || {
+        log_error "Failed to stop container"
+        exit 1
+    }
+    log_info "Container stopped"
 }
 
-status_container() {
-    check_docker
+cmd_status() {
+    check_container_cli
 
     echo "Container: $CONTAINER_NAME"
     echo "Image: $IMAGE_NAME"
     echo ""
 
-    if docker ps -a --format '{{.Names}}' | grep -q "^${CONTAINER_NAME}$"; then
-        if docker ps --format '{{.Names}}' | grep -q "^${CONTAINER_NAME}$"; then
-            echo -e "Status: ${GREEN}Running${NC}"
-            echo ""
-            docker ps --filter "name=^${CONTAINER_NAME}$" --format "table {{.ID}}\t{{.Image}}\t{{.Status}}\t{{.Ports}}"
+    if container ps -a | grep -q "$CONTAINER_NAME"; then
+        if container ps | grep -q "$CONTAINER_NAME"; then
+            echo -e "Status: ${GREEN}●${NC} Running"
         else
-            echo -e "Status: ${YELLOW}Stopped${NC}"
-            echo ""
-            docker ps -a --filter "name=^${CONTAINER_NAME}$" --format "table {{.ID}}\t{{.Image}}\t{{.Status}}"
+            echo -e "Status: ${YELLOW}●${NC} Stopped"
         fi
+        echo ""
+        container ps -a | grep "$CONTAINER_NAME" || true
     else
-        echo -e "Status: ${RED}Not created${NC}"
+        echo -e "Status: ${RED}●${NC} Not created"
     fi
 
     echo ""
-    if docker images --format '{{.Repository}}:{{.Tag}}' | grep -q "^${IMAGE_NAME}$"; then
+    if container image ls 2>/dev/null | grep -q "$IMAGE_NAME"; then
         echo -e "Image: ${GREEN}Built${NC}"
-        docker images --filter "reference=${IMAGE_NAME}" --format "table {{.Repository}}\t{{.Tag}}\t{{.Size}}\t{{.CreatedAt}}"
+        container image ls 2>/dev/null | grep "$IMAGE_NAME" || true
     else
         echo -e "Image: ${YELLOW}Not built${NC}"
     fi
 }
 
-destroy_container() {
-    check_docker
+cmd_destroy() {
+    check_container_cli
 
-    if docker ps --format '{{.Names}}' | grep -q "^${CONTAINER_NAME}$"; then
-        log_info "Stopping container '$CONTAINER_NAME'..."
-        docker stop "$CONTAINER_NAME"
+    echo -e "${YELLOW}⚠  WARNING${NC}"
+    echo "This will permanently delete the container: $CONTAINER_NAME"
+    echo ""
+    read -p "Are you sure? Type 'yes' to confirm: " confirm
+
+    if [[ "$confirm" != "yes" ]]; then
+        log_info "Cancelled"
+        return 0
     fi
 
-    if docker ps -a --format '{{.Names}}' | grep -q "^${CONTAINER_NAME}$"; then
-        log_info "Removing container '$CONTAINER_NAME'..."
-        docker rm "$CONTAINER_NAME"
-        log_info "Container removed successfully"
+    # Stop if running
+    if container ps | grep -q "$CONTAINER_NAME"; then
+        log_info "Stopping container..."
+        container stop "$CONTAINER_NAME" 2>/dev/null || true
+    fi
+
+    # Remove container
+    if container ps -a | grep -q "$CONTAINER_NAME"; then
+        log_info "Removing container..."
+        container rm "$CONTAINER_NAME" || {
+            log_error "Failed to remove container"
+            exit 1
+        }
+        log_info "Container removed"
     else
-        log_warn "Container '$CONTAINER_NAME' does not exist"
+        log_warn "Container does not exist"
+    fi
+
+    # Ask about volume
+    local config_file="${PROJECT_ROOT}/.claude-container/config.json"
+    if [[ -f "$config_file" ]]; then
+        local storage_type=$(jq -r '.storage.type // "bind"' "$config_file" 2>/dev/null || echo "bind")
+
+        if [[ "$storage_type" == "volume" ]]; then
+            local volume_name=$(jq -r '.storage.source // ""' "$config_file" 2>/dev/null)
+            if [[ -n "$volume_name" ]]; then
+                echo ""
+                read -p "Also delete volume '$volume_name'? (y/N): " remove_vol
+                if [[ "$remove_vol" == "y" ]]; then
+                    container volume rm "$volume_name" 2>/dev/null || true
+                    log_info "Volume removed"
+                fi
+            fi
+        fi
     fi
 }
 
-show_usage() {
-    cat << EOF
+cmd_help() {
+    cat << 'EOF'
+Container Management Script - Apple Container
+
 Usage: container <command>
 
-Container management for skills development environment
-
 Commands:
-    start       Build (if needed) and start the container
-    shell       Open an interactive shell in the running container
-    stop        Stop the running container
-    status      Show container and image status
-    destroy     Stop and remove the container (keeps image)
+  start      Start the container (creates if needed)
+  shell      Enter container shell (interactive bash)
+  stop       Stop the container (preserves data)
+  status     Show container and image status
+  destroy    Permanently delete container
+  help       Show this help message
 
 Examples:
-    container start     # Start the development container
-    container shell     # Access the container shell
-    container status    # Check if container is running
-    container stop      # Stop the container
-    container destroy   # Remove the container completely
+  container start      # Build image and start container
+  container shell      # Enter interactive shell
+  container status     # Check if running
+  container stop       # Stop container
+  container destroy    # Remove completely
+
+Requirements:
+  • macOS 26+
+  • Apple Silicon (M1/M2/M3/M4)
+  • Apple Container CLI (brew install --cask container)
+
+Documentation:
+  • README.md - Full documentation
+  • CONTAINER-SPEC.md - Container specifications
+  • GitHub: https://github.com/penguinmd/claude-container-isolation
 
 EOF
 }
 
-# Main command handling
+# Main command dispatcher
 main() {
-    if [ $# -eq 0 ]; then
-        show_usage
+    if [[ $# -eq 0 ]]; then
+        cmd_help
         exit 1
     fi
 
-    case "$1" in
-        start)
-            start_container
-            ;;
-        shell)
-            shell_container
-            ;;
-        stop)
-            stop_container
-            ;;
-        status)
-            status_container
-            ;;
-        destroy)
-            destroy_container
-            ;;
-        help|--help|-h)
-            show_usage
-            ;;
+    case "${1:-}" in
+        start)   cmd_start ;;
+        shell)   cmd_shell ;;
+        stop)    cmd_stop ;;
+        status)  cmd_status ;;
+        destroy) cmd_destroy ;;
+        help|--help|-h) cmd_help ;;
         *)
             log_error "Unknown command: $1"
             echo ""
-            show_usage
+            cmd_help
             exit 1
             ;;
     esac
