@@ -74,80 +74,71 @@ claude --version
 
 ## Installation
 
-### Installing the Skill into Claude Code
+### Installing the Skill
 
-This skill needs to be installed into your Claude Code skills directory so you can invoke it with `/isolated-dev-setup`.
+This repository provides a Claude Code skill that you can use directly by reading the `SKILL.md` file, or integrate into your skills workflow if you use a skill management system.
 
-**Option 1: Clone into Skills Directory (Recommended)**
+**Option 1: Direct Usage (No Installation Required)**
 
 ```bash
-# Navigate to your Claude Code skills directory
-cd ~/.config/superpowers/skills/skills/
+# Clone the repository anywhere
+git clone https://github.com/penguinmd/claude-container-isolation.git
+cd claude-container-isolation
 
-# Clone this repository
+# Navigate to your project directory
+cd /path/to/your/project
+
+# Start Claude Code and reference the skill
+claude
+> Can you read the SKILL.md file at /path/to/claude-container-isolation/SKILL.md and use it to set up container isolation for this project?
+```
+
+**Option 2: Install into Skills System**
+
+If you use a skill management system (like `superpowers` or custom skills directory):
+
+```bash
+# Clone to your skills directory location
+# Example for superpowers users:
+cd ~/.config/superpowers/skills/skills/
 git clone https://github.com/penguinmd/claude-container-isolation.git container-isolation
 
-# Verify installation
-ls -la container-isolation/
+# Or for custom skills directories, adjust the path accordingly
 ```
 
-**Option 2: Symlink (For Development)**
+**Option 3: Symlink for Development**
 
 ```bash
-# Clone to your preferred location
-git clone https://github.com/penguinmd/claude-container-isolation.git ~/projects/container-isolation
+# Clone to your preferred development location
+git clone https://github.com/penguinmd/claude-container-isolation.git ~/dev/container-isolation
 
-# Create symlink in skills directory
-ln -s ~/projects/container-isolation ~/.config/superpowers/skills/skills/container-isolation
-
-# Verify installation
-ls -la ~/.config/superpowers/skills/skills/container-isolation
+# Create symlink in your skills directory (adjust path as needed)
+ln -s ~/dev/container-isolation /path/to/your/skills/directory/container-isolation
 ```
 
-**Option 3: Manual Copy**
+### Using the Skill
 
+**Direct Method:**
 ```bash
-# Clone anywhere
-git clone https://github.com/penguinmd/claude-container-isolation.git
-
-# Copy to skills directory
-cp -r claude-container-isolation ~/.config/superpowers/skills/skills/container-isolation
-
-# Verify installation
-ls -la ~/.config/superpowers/skills/skills/container-isolation
-```
-
-### Verifying Skill Installation
-
-After installation, verify the skill is available:
-
-```bash
-# Start Claude Code
+cd /path/to/your/project
 claude
+> Read and use the SKILL.md from the container-isolation repository to set up isolated development
+```
 
-# In Claude, check for the skill
-> /help
-
-# Look for "container-isolation" or "isolated-dev-setup" in the skills list
-# Or try invoking it directly:
+**Via Skill System (if installed):**
+```bash
+cd /path/to/your/project
+claude
 > /isolated-dev-setup
 ```
 
-If the skill appears and Claude acknowledges it, installation was successful!
-
-### Updating the Skill
+### Updating
 
 To update to the latest version:
 
 ```bash
-# Navigate to the skill directory
-cd ~/.config/superpowers/skills/skills/container-isolation
-
-# Pull latest changes
+cd /path/to/claude-container-isolation
 git pull origin main
-
-# Verify update
-git log -1
 ```
 
 ## Quick Start
