@@ -28,8 +28,8 @@ log_error() {
 }
 
 # Check if running in container
-if [ ! -f /.dockerenv ]; then
-    log_warn "Not running in a Docker container - this script is meant for container operations"
+if [ ! -f /.containerenv ]; then
+    log_warn "Not running in a container - this script is meant for container operations"
 fi
 
 log_info "Syncing skills to container..."

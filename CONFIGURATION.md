@@ -1,5 +1,7 @@
 # Configuration Guide
 
+> **Note:** This skill uses **Apple Container** (macOS 26+, Apple Silicon). While this documentation may reference "Docker" in examples and explanations, all commands should use the `container` CLI instead of `docker` CLI (e.g., `container run` instead of `container run`). Apple Container uses OCI-compatible images and command syntax similar to Docker.
+
 This guide covers the configuration file schema, customization options, and advanced settings for the Container Isolation skill.
 
 ## Table of Contents
@@ -57,7 +59,7 @@ The container configuration is stored in `.claude-container/config.json`. Here's
     "readonlyRootfs": false,
     "noNewPrivileges": true,
     "seccompProfile": "default",
-    "apparmorProfile": "docker-default"
+    "apparmorProfile": "container-default"
   },
   "mcp": {
     "enabled": true,
@@ -82,14 +84,14 @@ The container configuration is stored in `.claude-container/config.json`. Here's
 #### `container.name`
 - **Type:** `string`
 - **Required:** Yes
-- **Description:** Unique identifier for the container. Must be unique across all Docker containers on the system.
+- **Description:** Unique identifier for the container. Must be unique across all containers on the system.
 - **Pattern:** `claude-workspace-<project-name>`
 - **Example:** `"claude-workspace-myapp"`
 
 #### `container.image`
 - **Type:** `string`
 - **Required:** Yes
-- **Description:** Docker image to use as the base. Can be any image from Docker Hub or a custom image.
+- **Description:** Container image to use as the base. Can be any image from container registry or a custom image.
 - **Common Values:**
   - `node:20-bookworm` - Node.js 20 on Debian
   - `python:3.11-slim` - Python 3.11 minimal
@@ -175,7 +177,7 @@ Mounts a host directory into the container:
 - `${HOME}`: Replaced with user's home directory
 
 ##### Named Volume
-Creates a Docker-managed volume:
+Creates a container-managed volume:
 ```json
 "/workspace/node_modules": {
   "type": "volume",
@@ -217,10 +219,10 @@ Creates an in-memory filesystem:
 - **Required:** No
 - **Default:** `"bridge"`
 - **Options:**
-  - `bridge` - Standard Docker network with port mapping
+  - `bridge` - Standard container network with port mapping
   - `host` - Share host's network namespace (no isolation)
   - `none` - No network access
-  - Custom network name - Connect to existing Docker network
+  - Custom network name - Connect to existing container network
 - **Example:** `"bridge"`
 
 #### `network.ports`
@@ -305,10 +307,10 @@ Creates an in-memory filesystem:
 
 #### `security.apparmorProfile`
 - **Type:** `string`
-- **Default:** `"docker-default"`
+- **Default:** `"container-default"`
 - **Description:** AppArmor security profile (Linux only).
-- **Options:** `"docker-default"`, `"unconfined"`, or custom profile name
-- **Example:** `"docker-default"`
+- **Options:** `"container-default"`, `"unconfined"`, or custom profile name
+- **Example:** `"container-default"`
 
 ### MCP Server Configuration
 
@@ -553,7 +555,7 @@ Share the host's network stack:
 **Cons:**
 - No network isolation
 - Port conflicts possible
-- Not available on Docker Desktop for Mac/Windows
+- Not available on Apple Container for Mac/Windows
 
 ### No Network
 
@@ -574,7 +576,7 @@ Completely isolated (no network access):
 
 ### Custom Network
 
-Connect to an existing Docker network:
+Connect to an existing container network:
 
 ```json
 {
@@ -587,7 +589,7 @@ Connect to an existing Docker network:
 **Setup:**
 ```bash
 # Create network
-docker network create my-custom-network
+container network create my-custom-network
 
 # Configure container to use it
 ```
@@ -624,7 +626,7 @@ Mount host directories for live development:
 
 ### Named Volumes
 
-Docker-managed persistent storage:
+container-managed persistent storage:
 
 ```json
 {
@@ -922,9 +924,9 @@ Currently, the skill supports one MCP server per container. To use multiple MCP 
 
 **Problem: Container fails to start**
 - Check image name is correct and available
-- Verify port conflicts: `docker ps`
+- Verify port conflicts: `container ps`
 - Check volume paths exist on host
-- Review Docker logs: `docker logs <container-name>`
+- Review container logs: `container logs <container-name>`
 
 **Problem: Port mapping not working**
 - Verify port is not in use: `lsof -i :<port>`
@@ -939,7 +941,7 @@ Currently, the skill supports one MCP server per container. To use multiple MCP 
 **Problem: Environment variables not set**
 - Check JSON syntax (quotes, commas)
 - Verify variable names don't conflict
-- Test with `docker exec <container> env`
+- Test with `container exec <container> env`
 
 ### Validation
 
@@ -950,14 +952,14 @@ Validate your configuration:
 cat .claude-container/config.json | jq .
 
 # Dry-run container creation
-docker create --name test-config \
+container create --name test-config \
   --rm \
   -v "$(pwd)":/workspace \
   node:20-bookworm \
   tail -f /dev/null
 
 # Test and remove
-docker rm test-config
+container rm test-config
 ```
 
 ### Getting Help
@@ -966,6 +968,6 @@ If you encounter issues:
 
 1. Check the main README.md for common solutions
 2. Review ADVANCED.md for complex scenarios
-3. Examine Docker logs: `docker logs <container-name>`
+3. Examine container logs: `container logs <container-name>`
 4. Validate configuration with `jq`
 5. Test with minimal configuration first

@@ -30,7 +30,7 @@ This container provides an isolated execution environment for Claude Code CLI op
 ## Security
 
 ### Isolation Level
-- **Process Isolation:** Container-level isolation via Podman/Docker
+- **Process Isolation:** Container-level isolation via Apple Container
 - **User Permissions:** Non-root user (claude) with sudo access
 - **Network Isolation:** {{NETWORK_ISOLATION_DETAILS}}
 

@@ -1,5 +1,7 @@
 # Advanced Usage Guide
 
+> **Important:** This skill uses **Apple Container** (macOS 26+, Apple Silicon). All command examples in this document use `container` CLI commands, not `docker` commands. Replace any `docker` command with `container` (e.g., `container run` → `container run`, `container exec` → `container exec`). Apple Container is OCI-compatible and supports the same image formats and similar command syntax.
+
 This guide covers advanced usage patterns, optimization techniques, and complex scenarios for the Container Isolation skill.
 
 ## Table of Contents
@@ -21,14 +23,14 @@ This guide covers advanced usage patterns, optimization techniques, and complex 
 
 Complex applications often require multiple containers working together. This section covers strategies for orchestrating multiple isolated environments.
 
-### Approach 1: Shared Docker Network
+### Approach 1: Shared Container Network
 
 Create containers that can communicate with each other:
 
 #### Step 1: Create a Custom Network
 
 ```bash
-docker network create claude-network
+container network create claude-network
 ```
 
 #### Step 2: Configure Containers
@@ -76,9 +78,9 @@ docker network create claude-network
 - Only necessary ports are exposed to host
 - Internal communication uses container names as hostnames
 
-### Approach 2: Docker Compose Integration
+### Approach 2: Container Compose Integration
 
-For complex multi-container setups, create a `docker-compose.yml`:
+For complex multi-container setups, create a `container-compose.yml`:
 
 ```yaml
 version: '3.8'
@@ -140,13 +142,13 @@ networks:
 **Usage:**
 ```bash
 # Start all services
-docker-compose up -d
+container-compose up -d
 
 # Access specific container with skill
 /container-isolation attach claude-frontend
 
 # Stop all services
-docker-compose down
+container-compose down
 ```
 
 ### Approach 3: Service Discovery
@@ -167,7 +169,7 @@ For dynamic environments, use service discovery:
 
 **Setup Consul:**
 ```bash
-docker run -d \
+container run -d \
   --name consul \
   --network claude-network \
   -p 8500:8500 \
@@ -180,9 +182,9 @@ docker run -d \
 
 Build specialized images for your development needs:
 
-#### Basic Dockerfile
+#### Basic Containerfile
 
-```dockerfile
+```containerfile
 FROM node:20-bookworm
 
 # Install additional tools
@@ -215,7 +217,7 @@ CMD ["/bin/bash"]
 **Build and Use:**
 ```bash
 # Build image
-docker build -t claude-node-dev:latest .
+container build -t claude-node-dev:latest .
 
 # Update config.json
 {
@@ -225,11 +227,11 @@ docker build -t claude-node-dev:latest .
 }
 ```
 
-#### Multi-Language Dockerfile
+#### Multi-Language Containerfile
 
 Support multiple languages in one image:
 
-```dockerfile
+```containerfile
 FROM ubuntu:22.04
 
 # Prevent interactive prompts
@@ -272,7 +274,7 @@ CMD ["/bin/bash"]
 
 Include common development tools:
 
-```dockerfile
+```containerfile
 FROM node:20-bookworm
 
 # Install development tools
@@ -317,7 +319,7 @@ CMD ["/bin/bash"]
 
 Reduce image size:
 
-```dockerfile
+```containerfile
 # Build stage
 FROM node:20-bookworm AS builder
 
@@ -338,7 +340,7 @@ CMD ["/bin/bash"]
 
 Optimize build speed:
 
-```dockerfile
+```containerfile
 FROM node:20-bookworm
 
 # Install system packages (changes rarely)
@@ -424,7 +426,7 @@ Multiple containers with service-to-service communication:
 
 ```bash
 # Create isolated network
-docker network create --driver bridge \
+container network create --driver bridge \
   --subnet 172.25.0.0/16 \
   --gateway 172.25.0.1 \
   claude-mesh
@@ -473,7 +475,7 @@ docker network create --driver bridge \
 
 Connect container to corporate VPN:
 
-```dockerfile
+```containerfile
 FROM node:20-bookworm
 
 # Install OpenVPN
@@ -518,7 +520,7 @@ openvpn --config /etc/openvpn/company.ovpn
 **Named Volume Backup:**
 ```bash
 # Backup a named volume
-docker run --rm \
+container run --rm \
   -v myapp-data:/source:ro \
   -v $(pwd):/backup \
   alpine \
@@ -537,7 +539,7 @@ mkdir -p "$BACKUP_DIR"
 
 for volume in "${VOLUMES[@]}"; do
     echo "Backing up $volume..."
-    docker run --rm \
+    container run --rm \
         -v "$volume:/source:ro" \
         -v "$BACKUP_DIR:/backup" \
         alpine \
@@ -552,10 +554,10 @@ echo "Backups completed in $BACKUP_DIR"
 **Restore from Backup:**
 ```bash
 # Create new volume
-docker volume create myapp-data-restored
+container volume create myapp-data-restored
 
 # Restore data
-docker run --rm \
+container run --rm \
   -v myapp-data-restored:/target \
   -v $(pwd):/backup \
   alpine \
@@ -576,10 +578,10 @@ if [ -z "$BACKUP_FILE" ] || [ -z "$VOLUME_NAME" ]; then
 fi
 
 # Create volume if it doesn't exist
-docker volume create "$VOLUME_NAME"
+container volume create "$VOLUME_NAME"
 
 # Restore
-docker run --rm \
+container run --rm \
     -v "$VOLUME_NAME:/target" \
     -v "$(dirname $BACKUP_FILE):/backup" \
     alpine \
@@ -595,7 +597,7 @@ echo "Restored $BACKUP_FILE to $VOLUME_NAME"
 **Export on Host A:**
 ```bash
 # Export volume
-docker run --rm \
+container run --rm \
   -v myapp-data:/source:ro \
   alpine \
   tar c -C /source . | gzip > myapp-data.tar.gz
@@ -607,11 +609,11 @@ scp myapp-data.tar.gz user@hostb:~/
 **Import on Host B:**
 ```bash
 # Create volume
-docker volume create myapp-data
+container volume create myapp-data
 
 # Import data
 gunzip < myapp-data.tar.gz | \
-  docker run --rm -i \
+  container run --rm -i \
     -v myapp-data:/target \
     alpine \
     tar x -C /target
@@ -622,10 +624,10 @@ gunzip < myapp-data.tar.gz | \
 **Copy volume to new volume:**
 ```bash
 # Create new volume
-docker volume create myapp-data-v2
+container volume create myapp-data-v2
 
 # Copy data
-docker run --rm \
+container run --rm \
   -v myapp-data:/source:ro \
   -v myapp-data-v2:/target \
   alpine \
@@ -638,16 +640,16 @@ docker run --rm \
 
 ```bash
 # List all volumes
-docker volume ls
+container volume ls
 
 # Remove specific volume
-docker volume rm myapp-old-data
+container volume rm myapp-old-data
 
 # Remove all unused volumes
-docker volume prune
+container volume prune
 
 # Force remove (even if in use)
-docker volume rm -f myapp-data
+container volume rm -f myapp-data
 ```
 
 #### Automated Cleanup Script
@@ -659,13 +661,13 @@ docker volume rm -f myapp-data
 # Find volumes older than 30 days
 CUTOFF_DATE=$(date -d '30 days ago' +%s)
 
-docker volume ls -q | while read volume; do
-    CREATED=$(docker volume inspect -f '{{.CreatedAt}}' "$volume")
+container volume ls -q | while read volume; do
+    CREATED=$(container volume inspect -f '{{.CreatedAt}}' "$volume")
     CREATED_TS=$(date -d "$CREATED" +%s)
 
     if [ "$CREATED_TS" -lt "$CUTOFF_DATE" ]; then
         echo "Removing old volume: $volume (created $CREATED)"
-        docker volume rm "$volume" 2>/dev/null || echo "  (in use, skipped)"
+        container volume rm "$volume" 2>/dev/null || echo "  (in use, skipped)"
     fi
 done
 ```
@@ -679,16 +681,16 @@ done
 **Export running container:**
 ```bash
 # Commit container to image
-docker commit claude-workspace-myapp myapp-dev:latest
+container commit claude-workspace-myapp myapp-dev:latest
 
 # Save image to file
-docker save myapp-dev:latest | gzip > myapp-dev.tar.gz
+container save myapp-dev:latest | gzip > myapp-dev.tar.gz
 ```
 
 **Import on another machine:**
 ```bash
 # Load image
-gunzip < myapp-dev.tar.gz | docker load
+gunzip < myapp-dev.tar.gz | container load
 
 # Use in configuration
 {
@@ -711,17 +713,17 @@ OUTPUT_DIR=${2:-./export}
 mkdir -p "$OUTPUT_DIR"
 
 # Export container as image
-docker commit "$CONTAINER_NAME" "${CONTAINER_NAME}-export:latest"
-docker save "${CONTAINER_NAME}-export:latest" | gzip > "$OUTPUT_DIR/image.tar.gz"
+container commit "$CONTAINER_NAME" "${CONTAINER_NAME}-export:latest"
+container save "${CONTAINER_NAME}-export:latest" | gzip > "$OUTPUT_DIR/image.tar.gz"
 
 # Export configuration
 cp .claude-container/config.json "$OUTPUT_DIR/"
 
 # Export volumes
-VOLUMES=$(docker inspect -f '{{range .Mounts}}{{if eq .Type "volume"}}{{.Name}} {{end}}{{end}}' "$CONTAINER_NAME")
+VOLUMES=$(container inspect -f '{{range .Mounts}}{{if eq .Type "volume"}}{{.Name}} {{end}}{{end}}' "$CONTAINER_NAME")
 
 for vol in $VOLUMES; do
-    docker run --rm \
+    container run --rm \
         -v "$vol:/source:ro" \
         -v "$OUTPUT_DIR:/backup" \
         alpine \
@@ -744,7 +746,7 @@ if [ -z "$IMPORT_DIR" ]; then
 fi
 
 # Load image
-gunzip < "$IMPORT_DIR/image.tar.gz" | docker load
+gunzip < "$IMPORT_DIR/image.tar.gz" | container load
 
 # Copy configuration
 mkdir -p .claude-container
@@ -753,10 +755,10 @@ cp "$IMPORT_DIR/config.json" .claude-container/
 # Restore volumes
 for vol_file in "$IMPORT_DIR"/volume-*.tar.gz; do
     VOL_NAME=$(basename "$vol_file" | sed 's/^volume-//' | sed 's/.tar.gz$//')
-    docker volume create "$VOL_NAME"
+    container volume create "$VOL_NAME"
 
     gunzip < "$vol_file" | \
-        docker run --rm -i \
+        container run --rm -i \
             -v "$VOL_NAME:/target" \
             alpine \
             tar x -C /target
@@ -767,17 +769,17 @@ echo "Environment imported. Start with: /container-isolation start"
 
 ### Sharing via Registry
 
-#### Push to Docker Hub
+#### Push to container registry
 
 ```bash
 # Tag image
-docker tag myapp-dev:latest username/myapp-dev:latest
+container tag myapp-dev:latest username/myapp-dev:latest
 
-# Login to Docker Hub
-docker login
+# Login to container registry
+container login
 
 # Push
-docker push username/myapp-dev:latest
+container push username/myapp-dev:latest
 ```
 
 #### Use in configuration
@@ -802,7 +804,7 @@ docker push username/myapp-dev:latest
 
 ```bash
 # Run registry
-docker run -d \
+container run -d \
   -p 5000:5000 \
   --restart=always \
   --name registry \
@@ -814,10 +816,10 @@ docker run -d \
 
 ```bash
 # Tag for private registry
-docker tag myapp-dev:latest localhost:5000/myapp-dev:latest
+container tag myapp-dev:latest localhost:5000/myapp-dev:latest
 
 # Push
-docker push localhost:5000/myapp-dev:latest
+container push localhost:5000/myapp-dev:latest
 ```
 
 #### Use in Configuration
@@ -839,13 +841,13 @@ docker push localhost:5000/myapp-dev:latest
 Use `:cached` or `:delegated` mount modes:
 
 ```bash
-# Manual docker run example
-docker run -v "$(pwd):/workspace:cached" myimage
+# Manual container run example
+container run -v "$(pwd):/workspace:cached" myimage
 ```
 
-**For configuration** (requires manual Docker usage or docker-compose):
+**For configuration** (requires manual container CLI usage or container-compose):
 
-In `docker-compose.yml`:
+In `container-compose.yml`:
 ```yaml
 volumes:
   - ./src:/workspace/src:cached  # Better read performance
@@ -926,7 +928,7 @@ sysctl vm.swappiness=10  # Reduce swap usage
 
 #### Layer Caching Strategy
 
-```dockerfile
+```containerfile
 # Optimal layer ordering (least to most frequently changed)
 FROM node:20-bookworm
 
@@ -950,10 +952,10 @@ Enable BuildKit for faster builds:
 
 ```bash
 # Enable BuildKit
-export DOCKER_BUILDKIT=1
+export CONTAINER_BUILDKIT=1
 
 # Build with BuildKit
-docker build -t myimage .
+container build -t myimage .
 ```
 
 **Features:**
@@ -1020,8 +1022,8 @@ const pool = new Pool({
 #### Drop Capabilities
 
 ```bash
-# Via docker run
-docker run --cap-drop=ALL --cap-add=NET_BIND_SERVICE myimage
+# Via container run
+container run --cap-drop=ALL --cap-add=NET_BIND_SERVICE myimage
 ```
 
 **Common capabilities to drop:**
@@ -1033,7 +1035,7 @@ docker run --cap-drop=ALL --cap-add=NET_BIND_SERVICE myimage
 
 #### Non-Root User
 
-```dockerfile
+```containerfile
 FROM node:20-bookworm
 
 # Create non-root user
@@ -1068,16 +1070,16 @@ WORKDIR /workspace
 .claude-container/secrets/
 ```
 
-#### Use Docker Secrets
+#### Use Container Secrets
 
 For sensitive data:
 
 ```bash
 # Create secret
-echo "my-secret-value" | docker secret create api_key -
+echo "my-secret-value" | container secret create api_key -
 
 # Use in container (swarm mode)
-docker service create \
+container service create \
   --secret api_key \
   myimage
 ```
@@ -1107,14 +1109,14 @@ cat /run/secrets/api_key
 
 ```bash
 # Allow only specific outbound destinations
-iptables -A DOCKER-USER -d 192.168.1.0/24 -j ACCEPT
-iptables -A DOCKER-USER -j DROP
+iptables -A CONTAINER-USER -d 192.168.1.0/24 -j ACCEPT
+iptables -A CONTAINER-USER -j DROP
 ```
 
 #### TLS for Inter-Container Communication
 
 ```yaml
-# docker-compose.yml
+# container-compose.yml
 services:
   app:
     environment:
@@ -1133,8 +1135,8 @@ services:
 #### Scan Images for Vulnerabilities
 
 ```bash
-# Using Docker Scout
-docker scout cves myimage:latest
+# Using Container Image Scanning
+container image scan cves myimage:latest
 
 # Using Trivy
 trivy image myimage:latest
@@ -1146,10 +1148,10 @@ snyk container test myimage:latest
 #### Audit Configuration
 
 ```bash
-# Docker Bench Security
-git clone https://github.com/docker/docker-bench-security.git
-cd docker-bench-security
-sudo sh docker-bench-security.sh
+# Container Security Audit
+git clone # Security audit tools for containers
+# Use container security scanning tools
+# Run security audit
 ```
 
 ## CI/CD Integration
@@ -1175,16 +1177,16 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
+      - name: Set up Container Build
+        uses: # Container build setup@v2
 
       - name: Build container image
         run: |
-          docker build -t myapp-test:latest .
+          container build -t myapp-test:latest .
 
       - name: Create container
         run: |
-          docker create \
+          container create \
             --name test-container \
             -v "$PWD:/workspace" \
             -v myapp-node-modules:/workspace/node_modules \
@@ -1192,42 +1194,42 @@ jobs:
             tail -f /dev/null
 
       - name: Start container
-        run: docker start test-container
+        run: container start test-container
 
       - name: Install dependencies
         run: |
-          docker exec test-container npm install
+          container exec test-container npm install
 
       - name: Run tests
         run: |
-          docker exec test-container npm test
+          container exec test-container npm test
 
       - name: Run linter
         run: |
-          docker exec test-container npm run lint
+          container exec test-container npm run lint
 
       - name: Build application
         run: |
-          docker exec test-container npm run build
+          container exec test-container npm run build
 
       - name: Cleanup
         if: always()
         run: |
-          docker stop test-container
-          docker rm test-container
+          container stop test-container
+          container rm test-container
 ```
 
 ### GitLab CI
 
 ```yaml
 # .gitlab-ci.yml
-image: docker:latest
+image: container:latest
 
 services:
-  - docker:dind
+  - container:dind
 
 variables:
-  DOCKER_DRIVER: overlay2
+  CONTAINER_DRIVER: overlay2
   CONTAINER_IMAGE: $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG
 
 stages:
@@ -1238,20 +1240,20 @@ stages:
 build:
   stage: build
   script:
-    - docker build -t $CONTAINER_IMAGE .
-    - docker push $CONTAINER_IMAGE
+    - container build -t $CONTAINER_IMAGE .
+    - container push $CONTAINER_IMAGE
 
 test:
   stage: test
   script:
-    - docker pull $CONTAINER_IMAGE
-    - docker create --name test-container -v "$PWD:/workspace" $CONTAINER_IMAGE
-    - docker start test-container
-    - docker exec test-container npm install
-    - docker exec test-container npm test
+    - container pull $CONTAINER_IMAGE
+    - container create --name test-container -v "$PWD:/workspace" $CONTAINER_IMAGE
+    - container start test-container
+    - container exec test-container npm install
+    - container exec test-container npm test
   after_script:
-    - docker stop test-container || true
-    - docker rm test-container || true
+    - container stop test-container || true
+    - container rm test-container || true
 ```
 
 ### Jenkins Pipeline
@@ -1269,7 +1271,7 @@ pipeline {
         stage('Build Image') {
             steps {
                 script {
-                    docker.build(env.CONTAINER_IMAGE)
+                    container.build(env.CONTAINER_IMAGE)
                 }
             }
         }
@@ -1277,7 +1279,7 @@ pipeline {
         stage('Test') {
             steps {
                 script {
-                    docker.image(env.CONTAINER_IMAGE).inside('-v $WORKSPACE:/workspace') {
+                    container.image(env.CONTAINER_IMAGE).inside('-v $WORKSPACE:/workspace') {
                         sh 'npm install'
                         sh 'npm test'
                         sh 'npm run lint'
@@ -1289,7 +1291,7 @@ pipeline {
         stage('Build') {
             steps {
                 script {
-                    docker.image(env.CONTAINER_IMAGE).inside('-v $WORKSPACE:/workspace') {
+                    container.image(env.CONTAINER_IMAGE).inside('-v $WORKSPACE:/workspace') {
                         sh 'npm run build'
                     }
                 }
@@ -1313,13 +1315,13 @@ pipeline {
 
 ```bash
 # Get a shell
-docker exec -it claude-workspace-myapp /bin/bash
+container exec -it claude-workspace-myapp /bin/bash
 
 # Run specific command
-docker exec claude-workspace-myapp ps aux
+container exec claude-workspace-myapp ps aux
 
 # As different user
-docker exec -u root -it claude-workspace-myapp /bin/bash
+container exec -u root -it claude-workspace-myapp /bin/bash
 ```
 
 #### Node.js Debugging
@@ -1408,19 +1410,19 @@ debugpy.wait_for_client()  # Optional: wait for debugger
 
 ```bash
 # All logs
-docker logs claude-workspace-myapp
+container logs claude-workspace-myapp
 
 # Follow logs
-docker logs -f claude-workspace-myapp
+container logs -f claude-workspace-myapp
 
 # Last 100 lines
-docker logs --tail 100 claude-workspace-myapp
+container logs --tail 100 claude-workspace-myapp
 
 # Since timestamp
-docker logs --since 2025-01-15T10:00:00 claude-workspace-myapp
+container logs --since 2025-01-15T10:00:00 claude-workspace-myapp
 
 # With timestamps
-docker logs -t claude-workspace-myapp
+container logs -t claude-workspace-myapp
 ```
 
 #### Structured Logging
@@ -1443,7 +1445,7 @@ logger.info('Server started', { port: 3000, env: process.env.NODE_ENV });
 **Parse logs:**
 ```bash
 # Extract JSON logs
-docker logs claude-workspace-myapp 2>&1 | jq 'select(.level=="error")'
+container logs claude-workspace-myapp 2>&1 | jq 'select(.level=="error")'
 ```
 
 ### Performance Profiling
@@ -1452,26 +1454,26 @@ docker logs claude-workspace-myapp 2>&1 | jq 'select(.level=="error")'
 
 ```bash
 # Real-time stats
-docker stats claude-workspace-myapp
+container stats claude-workspace-myapp
 
 # One-time stats
-docker stats --no-stream claude-workspace-myapp
+container stats --no-stream claude-workspace-myapp
 
 # Format output
-docker stats --format "table {{.Container}}\t{{.CPUPerc}}\t{{.MemUsage}}"
+container stats --format "table {{.Container}}\t{{.CPUPerc}}\t{{.MemUsage}}"
 ```
 
 #### Process Inspection
 
 ```bash
 # List processes
-docker top claude-workspace-myapp
+container top claude-workspace-myapp
 
 # Detailed process tree
-docker exec claude-workspace-myapp ps auxf
+container exec claude-workspace-myapp ps auxf
 
 # Resource usage by process
-docker exec claude-workspace-myapp top -b -n 1
+container exec claude-workspace-myapp top -b -n 1
 ```
 
 ### Network Debugging
@@ -1480,33 +1482,33 @@ docker exec claude-workspace-myapp top -b -n 1
 
 ```bash
 # Inspect network
-docker network inspect bridge
+container network inspect bridge
 
 # Test connectivity
-docker exec claude-workspace-myapp ping -c 3 google.com
+container exec claude-workspace-myapp ping -c 3 google.com
 
 # DNS resolution
-docker exec claude-workspace-myapp nslookup github.com
+container exec claude-workspace-myapp nslookup github.com
 
 # Port listening
-docker exec claude-workspace-myapp netstat -tlnp
+container exec claude-workspace-myapp netstat -tlnp
 
 # Active connections
-docker exec claude-workspace-myapp ss -tunap
+container exec claude-workspace-myapp ss -tunap
 ```
 
 #### Traffic Capture
 
 ```bash
 # Install tcpdump in container
-docker exec -u root claude-workspace-myapp apt-get update
-docker exec -u root claude-workspace-myapp apt-get install -y tcpdump
+container exec -u root claude-workspace-myapp apt-get update
+container exec -u root claude-workspace-myapp apt-get install -y tcpdump
 
 # Capture traffic
-docker exec claude-workspace-myapp tcpdump -i eth0 -w /tmp/capture.pcap
+container exec claude-workspace-myapp tcpdump -i eth0 -w /tmp/capture.pcap
 
 # Analyze on host
-docker cp claude-workspace-myapp:/tmp/capture.pcap .
+container cp claude-workspace-myapp:/tmp/capture.pcap .
 wireshark capture.pcap
 ```
 
@@ -1526,11 +1528,11 @@ Error response from daemon: driver failed programming external connectivity
 # Check port conflicts
 lsof -i :3000
 
-# Check Docker daemon
-docker info
+# Check container daemon
+container info
 
 # Check system resources
-docker system df
+container system df
 ```
 
 **Solutions:**
@@ -1547,9 +1549,9 @@ docker system df
 # Kill conflicting process
 kill -9 $(lsof -t -i :3000)
 
-# Restart Docker daemon
-sudo systemctl restart docker  # Linux
-# or restart Docker Desktop
+# Restart container daemon
+# Restart container service  # Linux
+# or restart Apple Container
 ```
 
 #### Issue: Volume Mount Empty
@@ -1561,10 +1563,10 @@ sudo systemctl restart docker  # Linux
 **Diagnosis:**
 ```bash
 # Check mount
-docker exec claude-workspace-myapp ls -la /workspace
+container exec claude-workspace-myapp ls -la /workspace
 
 # Inspect mounts
-docker inspect -f '{{json .Mounts}}' claude-workspace-myapp | jq .
+container inspect -f '{{json .Mounts}}' claude-workspace-myapp | jq .
 
 # Check permissions
 ls -la /path/to/project
@@ -1585,7 +1587,7 @@ chmod -R 755 /path/to/project
   }
 }
 
-# Check Docker Desktop file sharing settings (macOS/Windows)
+# Check Apple Container file sharing settings (macOS/Windows)
 # Preferences -> Resources -> File Sharing
 ```
 
@@ -1594,13 +1596,13 @@ chmod -R 755 /path/to/project
 **Diagnosis:**
 ```bash
 # Check container stats
-docker stats claude-workspace-myapp
+container stats claude-workspace-myapp
 
 # Check processes
-docker exec claude-workspace-myapp top
+container exec claude-workspace-myapp top
 
 # Check for loops
-docker exec claude-workspace-myapp ps aux | grep -E "(node|python)"
+container exec claude-workspace-myapp ps aux | grep -E "(node|python)"
 ```
 
 **Solutions:**
@@ -1628,13 +1630,13 @@ Killed
 **Diagnosis:**
 ```bash
 # Check memory usage
-docker stats --no-stream claude-workspace-myapp
+container stats --no-stream claude-workspace-myapp
 
 # Check processes
-docker exec claude-workspace-myapp ps aux --sort=-%mem | head
+container exec claude-workspace-myapp ps aux --sort=-%mem | head
 
 # Check for memory leaks
-docker exec claude-workspace-myapp node --inspect app.js
+container exec claude-workspace-myapp node --inspect app.js
 # Use Chrome DevTools memory profiler
 ```
 
@@ -1650,7 +1652,7 @@ docker exec claude-workspace-myapp node --inspect app.js
 
 # Fix memory leaks in application
 # Add heap size limits for Node.js
-docker exec claude-workspace-myapp node --max-old-space-size=2048 app.js
+container exec claude-workspace-myapp node --max-old-space-size=2048 app.js
 ```
 
 #### Issue: Network Connectivity Problems
@@ -1662,17 +1664,17 @@ docker exec claude-workspace-myapp node --max-old-space-size=2048 app.js
 **Diagnosis:**
 ```bash
 # Test external connectivity
-docker exec claude-workspace-myapp ping -c 3 8.8.8.8
-docker exec claude-workspace-myapp curl https://google.com
+container exec claude-workspace-myapp ping -c 3 8.8.8.8
+container exec claude-workspace-myapp curl https://google.com
 
 # Test DNS
-docker exec claude-workspace-myapp nslookup google.com
+container exec claude-workspace-myapp nslookup google.com
 
 # Check network configuration
-docker network inspect bridge
+container network inspect bridge
 
 # Test inter-container connectivity
-docker exec claude-workspace-myapp ping -c 3 other-container
+container exec claude-workspace-myapp ping -c 3 other-container
 ```
 
 **Solutions:**
@@ -1684,14 +1686,14 @@ docker exec claude-workspace-myapp ping -c 3 other-container
   }
 }
 
-# Restart Docker networking
-sudo systemctl restart docker
+# Restart container networking
+# Restart container service
 
 # Check firewall rules
-sudo iptables -L DOCKER-USER
+sudo iptables -L CONTAINER-USER
 
 # Verify containers on same network
-docker network connect claude-network claude-workspace-myapp
+container network connect claude-network claude-workspace-myapp
 ```
 
 #### Issue: Permission Denied Errors
@@ -1704,22 +1706,22 @@ EACCES: permission denied, open '/workspace/file.txt'
 **Diagnosis:**
 ```bash
 # Check file ownership
-docker exec claude-workspace-myapp ls -la /workspace
+container exec claude-workspace-myapp ls -la /workspace
 
 # Check user
-docker exec claude-workspace-myapp whoami
-docker exec claude-workspace-myapp id
+container exec claude-workspace-myapp whoami
+container exec claude-workspace-myapp id
 
 # Check mount permissions
-docker inspect -f '{{json .Mounts}}' claude-workspace-myapp | jq .
+container inspect -f '{{json .Mounts}}' claude-workspace-myapp | jq .
 ```
 
 **Solutions:**
 ```bash
 # Run as root (temporary)
-docker exec -u root claude-workspace-myapp chown -R node:node /workspace
+container exec -u root claude-workspace-myapp chown -R node:node /workspace
 
-# Match user IDs (Dockerfile)
+# Match user IDs (Containerfile)
 FROM node:20-bookworm
 RUN usermod -u 1000 node && groupmod -g 1000 node
 
@@ -1739,64 +1741,64 @@ RUN usermod -u 1000 node && groupmod -g 1000 node
 #### System Information
 
 ```bash
-# Docker version
-docker version
+# Container version
+container version
 
-# Docker system information
-docker info
+# Container system information
+container info
 
 # Disk usage
-docker system df
+container system df
 
 # Detailed disk usage
-docker system df -v
+container system df -v
 ```
 
 #### Container Inspection
 
 ```bash
 # Full container details
-docker inspect claude-workspace-myapp
+container inspect claude-workspace-myapp
 
 # Specific field
-docker inspect -f '{{.State.Status}}' claude-workspace-myapp
+container inspect -f '{{.State.Status}}' claude-workspace-myapp
 
 # Environment variables
-docker inspect -f '{{json .Config.Env}}' claude-workspace-myapp | jq .
+container inspect -f '{{json .Config.Env}}' claude-workspace-myapp | jq .
 
 # Network settings
-docker inspect -f '{{json .NetworkSettings}}' claude-workspace-myapp | jq .
+container inspect -f '{{json .NetworkSettings}}' claude-workspace-myapp | jq .
 ```
 
 #### Resource Monitoring
 
 ```bash
 # Real-time resource usage
-docker stats
+container stats
 
 # Process list
-docker top claude-workspace-myapp
+container top claude-workspace-myapp
 
 # Disk usage by container
-docker ps -s
+container ps -s
 
 # Events log
-docker events --since 1h
+container events --since 1h
 ```
 
 ### Getting Help
 
 If you're stuck:
 
-1. **Check Docker logs:**
+1. **Check container logs:**
    ```bash
-   journalctl -u docker.service  # Linux
-   # or check Docker Desktop logs
+   # Check container system logs  # Linux
+   # or check Apple Container logs
    ```
 
 2. **Enable debug mode:**
    ```bash
-   # /etc/docker/daemon.json
+   # # Container daemon configuration
    {
      "debug": true,
      "log-level": "debug"
@@ -1817,9 +1819,9 @@ If you're stuck:
 4. **Review documentation:**
    - README.md - Basic usage
    - CONFIGURATION.md - Configuration details
-   - Docker documentation - https://docs.docker.com
+   - Container documentation - https://github.com/apple/container
 
 5. **Check for known issues:**
-   - Docker GitHub issues
+   - Container GitHub issues
    - Claude Code documentation
    - Community forums
