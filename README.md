@@ -72,6 +72,84 @@ which claude
 claude --version
 ```
 
+## Installation
+
+### Installing the Skill into Claude Code
+
+This skill needs to be installed into your Claude Code skills directory so you can invoke it with `/isolated-dev-setup`.
+
+**Option 1: Clone into Skills Directory (Recommended)**
+
+```bash
+# Navigate to your Claude Code skills directory
+cd ~/.config/superpowers/skills/skills/
+
+# Clone this repository
+git clone https://github.com/penguinmd/claude-container-isolation.git container-isolation
+
+# Verify installation
+ls -la container-isolation/
+```
+
+**Option 2: Symlink (For Development)**
+
+```bash
+# Clone to your preferred location
+git clone https://github.com/penguinmd/claude-container-isolation.git ~/projects/container-isolation
+
+# Create symlink in skills directory
+ln -s ~/projects/container-isolation ~/.config/superpowers/skills/skills/container-isolation
+
+# Verify installation
+ls -la ~/.config/superpowers/skills/skills/container-isolation
+```
+
+**Option 3: Manual Copy**
+
+```bash
+# Clone anywhere
+git clone https://github.com/penguinmd/claude-container-isolation.git
+
+# Copy to skills directory
+cp -r claude-container-isolation ~/.config/superpowers/skills/skills/container-isolation
+
+# Verify installation
+ls -la ~/.config/superpowers/skills/skills/container-isolation
+```
+
+### Verifying Skill Installation
+
+After installation, verify the skill is available:
+
+```bash
+# Start Claude Code
+claude
+
+# In Claude, check for the skill
+> /help
+
+# Look for "container-isolation" or "isolated-dev-setup" in the skills list
+# Or try invoking it directly:
+> /isolated-dev-setup
+```
+
+If the skill appears and Claude acknowledges it, installation was successful!
+
+### Updating the Skill
+
+To update to the latest version:
+
+```bash
+# Navigate to the skill directory
+cd ~/.config/superpowers/skills/skills/container-isolation
+
+# Pull latest changes
+git pull origin main
+
+# Verify update
+git log -1
+```
+
 ## Quick Start
 
 ### 1. Navigate to Your Project
