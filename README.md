@@ -536,7 +536,7 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 
 ```bash
 # Clone the repository
-git clone https://github.com/USER/claude-container-isolation.git
+git clone https://github.com/penguinmd/claude-container-isolation.git
 cd claude-container-isolation
 
 # Test the skill

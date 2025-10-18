@@ -132,7 +132,7 @@ sudo installer -pkg container-0.1.0-installer-signed.pkg -target /
 ## See Also
 
 - **Full documentation:** Generated `CONTAINER-SPEC.md` in your project
-- **GitHub README:** https://github.com/USER/claude-container-isolation
+- **GitHub README:** https://github.com/penguinmd/claude-container-isolation
 - **Apple Container:** https://github.com/apple/container
 - **Configuration reference:** `CONFIGURATION.md`
 - **Advanced usage:** `ADVANCED.md`
