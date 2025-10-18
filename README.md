@@ -74,14 +74,26 @@ claude --version
 
 ## Installation
 
-### Installing the Skill
+### Installing via Plugin Marketplace (Easiest)
+
+Install directly from the Claude Code plugin marketplace:
+
+```bash
+# In Claude Code
+/plugin marketplace add penguinmd/claude-container-isolation
+/plugin install container-isolation@penguinmd/claude-container-isolation
+```
+
+That's it! The skill will be automatically available in all your projects.
+
+### Manual Installation
 
 Claude Code supports skills in two locations:
 
 - **Personal Skills:** `~/.claude/skills/` (available in all projects)
 - **Project Skills:** `.claude/skills/` (available only in the current project)
 
-**Option 1: Install as Personal Skill (Recommended)**
+**Option 1: Install as Personal Skill**
 
 Available across all your projects:
 
