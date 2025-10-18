@@ -248,7 +248,7 @@ Based on user choices, create `.claude-container/config.json`:
   },
   "skills": {
     "sync": [true | false],
-    "source": "[~/.config/superpowers/skills]"
+    "source": "[~/.claude/skills]"
   },
   "git": {
     "configured": [true | false],
@@ -288,8 +288,10 @@ Track what was created:
 Based on chosen OS, copy the appropriate template:
 
 ```bash
-# Use Read tool to read the template
-Read: ~/.config/superpowers/skills/skills/container-isolation/templates/Containerfile.[ubuntu|alpine|debian]
+# Use Read tool to read the template from the skill directory
+# The skill will be located at either:
+# ~/.claude/skills/container-isolation/templates/Containerfile.[ubuntu|alpine|debian]
+# or .claude/skills/container-isolation/templates/Containerfile.[ubuntu|alpine|debian]
 
 # Use Write tool to create .claude-container/Containerfile
 ```
@@ -299,10 +301,14 @@ Read: ~/.config/superpowers/skills/skills/container-isolation/templates/Containe
 Copy scripts from skill templates:
 
 ```bash
-# Read each script template
-Read: ~/.config/superpowers/skills/skills/container-isolation/scripts/container
-Read: ~/.config/superpowers/skills/skills/container-isolation/scripts/setup-mcp.sh
-Read: ~/.config/superpowers/skills/skills/container-isolation/scripts/sync-skills.sh
+# Read each script template from the skill directory
+# The skill will be located at either:
+# ~/.claude/skills/container-isolation/scripts/[script-name]
+# or .claude/skills/container-isolation/scripts/[script-name]
+
+Read: [skill-path]/scripts/container
+Read: [skill-path]/scripts/setup-mcp.sh
+Read: [skill-path]/scripts/sync-skills.sh
 
 # Write to project with variable substitution
 # Replace {{CONTAINER_NAME}}, {{IMAGE_NAME}}, {{PROJECT_ROOT}}
@@ -319,7 +325,12 @@ chmod +x scripts/container scripts/setup-mcp.sh scripts/sync-skills.sh
 
 Read the template:
 ```bash
-Read: ~/.config/superpowers/skills/skills/container-isolation/templates/container-spec.md.template
+# Read from the skill directory
+# Located at either:
+# ~/.claude/skills/container-isolation/templates/container-spec.md.template
+# or .claude/skills/container-isolation/templates/container-spec.md.template
+
+Read: [skill-path]/templates/container-spec.md.template
 ```
 
 Fill in all `{{PLACEHOLDERS}}` with actual values from config.
@@ -410,7 +421,7 @@ sudo installer -pkg container-0.1.0-installer-signed.pkg -target /
 
 ### Skills Sync
 - Option to copy your Claude skills into container (default: Yes)
-- Container has same superpowers as host Claude
+- Container has same capabilities as host Claude
 - Keeps host skills read-only
 
 ### MCP Integration

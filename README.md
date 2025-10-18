@@ -76,60 +76,84 @@ claude --version
 
 ### Installing the Skill
 
-This repository provides a Claude Code skill that you can use directly by reading the `SKILL.md` file, or integrate into your skills workflow if you use a skill management system.
+Claude Code supports skills in two locations:
 
-**Option 1: Direct Usage (No Installation Required)**
+- **Personal Skills:** `~/.claude/skills/` (available in all projects)
+- **Project Skills:** `.claude/skills/` (available only in the current project)
 
-```bash
-# Clone the repository anywhere
-git clone https://github.com/penguinmd/claude-container-isolation.git
-cd claude-container-isolation
+**Option 1: Install as Personal Skill (Recommended)**
 
-# Navigate to your project directory
-cd /path/to/your/project
-
-# Start Claude Code and reference the skill
-claude
-> Can you read the SKILL.md file at /path/to/claude-container-isolation/SKILL.md and use it to set up container isolation for this project?
-```
-
-**Option 2: Install into Skills System**
-
-If you use a skill management system (like `superpowers` or custom skills directory):
+Available across all your projects:
 
 ```bash
-# Clone to your skills directory location
-# Example for superpowers users:
-cd ~/.config/superpowers/skills/skills/
+# Clone to your personal skills directory
+cd ~/.claude/skills/
 git clone https://github.com/penguinmd/claude-container-isolation.git container-isolation
 
-# Or for custom skills directories, adjust the path accordingly
+# Verify installation
+ls -la ~/.claude/skills/container-isolation/SKILL.md
 ```
 
-**Option 3: Symlink for Development**
+**Option 2: Install as Project Skill**
+
+Available only in a specific project:
 
 ```bash
-# Clone to your preferred development location
-git clone https://github.com/penguinmd/claude-container-isolation.git ~/dev/container-isolation
-
-# Create symlink in your skills directory (adjust path as needed)
-ln -s ~/dev/container-isolation /path/to/your/skills/directory/container-isolation
-```
-
-### Using the Skill
-
-**Direct Method:**
-```bash
+# Navigate to your project
 cd /path/to/your/project
-claude
-> Read and use the SKILL.md from the container-isolation repository to set up isolated development
+
+# Create skills directory if it doesn't exist
+mkdir -p .claude/skills
+
+# Clone into project skills directory
+cd .claude/skills/
+git clone https://github.com/penguinmd/claude-container-isolation.git container-isolation
+
+# Verify installation
+ls -la .claude/skills/container-isolation/SKILL.md
 ```
 
-**Via Skill System (if installed):**
+**Option 3: Direct Usage (No Installation)**
+
+Use without installing by referencing the SKILL.md file directly:
+
 ```bash
-cd /path/to/your/project
+# Clone anywhere
+git clone https://github.com/penguinmd/claude-container-isolation.git ~/downloads/container-isolation
+
+# In Claude Code, reference it directly
 claude
-> /isolated-dev-setup
+> Read the SKILL.md file at ~/downloads/container-isolation/SKILL.md and use it to set up container isolation for this project
+```
+
+### Activating the Skill
+
+After installation, restart Claude Code to load the skill:
+
+```bash
+# If Claude Code is running, exit and restart
+# The skill will be automatically available
+
+# Navigate to your project
+cd /path/to/your/project
+
+# Start Claude Code
+claude
+
+# The skill is now available - Claude will use it when appropriate
+> Set up container isolation for this project
+```
+
+### Verifying Installation
+
+Check if the skill is properly installed:
+
+```bash
+# Check personal skills
+ls -la ~/.claude/skills/container-isolation/SKILL.md
+
+# Or check project skills
+ls -la .claude/skills/container-isolation/SKILL.md
 ```
 
 ### Updating
@@ -137,8 +161,15 @@ claude
 To update to the latest version:
 
 ```bash
-cd /path/to/claude-container-isolation
+# For personal skills
+cd ~/.claude/skills/container-isolation
 git pull origin main
+
+# Or for project skills
+cd /path/to/your/project/.claude/skills/container-isolation
+git pull origin main
+
+# Restart Claude Code to load updates
 ```
 
 ## Quick Start
