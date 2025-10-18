@@ -75,7 +75,7 @@ cat <<EOF
 {
   "hookSpecificOutput": {
     "hookEventName": "SessionStart",
-    "additionalContext": "${update_escaped}**Container Isolation Skill Available**\n\nSkill: ${skill_name_escaped}\nDescription: ${skill_description_escaped}\nWhen to use: ${when_to_use_escaped}\n\n**Slash command:** /container - Manage isolated container environments (setup, status, shell, stop)\n\n**Skill location:** ${PLUGIN_ROOT}/SKILL.md"
+    "additionalContext": "${update_escaped}**Container Isolation Skill Available**\n\nSkill: ${skill_name_escaped}\nDescription: ${skill_description_escaped}\nWhen to use: ${when_to_use_escaped}\n\n**Slash command:** /container-isolation:container - Manage isolated container environments (setup, status, shell, manage)\n\n**Skill location:** ${PLUGIN_ROOT}/SKILL.md"
   }
 }
 EOF

@@ -74,115 +74,83 @@ claude --version
 
 ## Installation
 
-### Installing via Plugin Marketplace (Easiest)
+### One-Line Installation (Recommended)
 
-Install directly from the Claude Code plugin marketplace:
+The easiest way to install is with our automated installation script:
 
 ```bash
-# In Claude Code
-/plugin marketplace add penguinmd/claude-container-isolation-marketplace
-/plugin install container-isolation@container-isolation-marketplace
+curl -sSL https://raw.githubusercontent.com/penguinmd/claude-container-isolation/main/install.sh | bash
 ```
 
-That's it! The skill will be automatically available in all your projects.
+This will:
+- Add the plugin marketplace
+- Install the container-isolation plugin
+- Verify installation
+- Display next steps
+
+**That's it!** The plugin is now available in all your projects.
 
 ### Manual Installation
 
-Claude Code supports skills in two locations:
-
-- **Personal Skills:** `~/.claude/skills/` (available in all projects)
-- **Project Skills:** `.claude/skills/` (available only in the current project)
-
-**Option 1: Install as Personal Skill**
-
-Available across all your projects:
+If you prefer to install manually:
 
 ```bash
-# Clone to your personal skills directory
-cd ~/.claude/skills/
-git clone https://github.com/penguinmd/claude-container-isolation.git container-isolation
-
-# Verify installation
-ls -la ~/.claude/skills/container-isolation/SKILL.md
-```
-
-**Option 2: Install as Project Skill**
-
-Available only in a specific project:
-
-```bash
-# Navigate to your project
-cd /path/to/your/project
-
-# Create skills directory if it doesn't exist
-mkdir -p .claude/skills
-
-# Clone into project skills directory
-cd .claude/skills/
-git clone https://github.com/penguinmd/claude-container-isolation.git container-isolation
-
-# Verify installation
-ls -la .claude/skills/container-isolation/SKILL.md
-```
-
-**Option 3: Direct Usage (No Installation)**
-
-Use without installing by referencing the SKILL.md file directly:
-
-```bash
-# Clone anywhere
-git clone https://github.com/penguinmd/claude-container-isolation.git ~/downloads/container-isolation
-
-# In Claude Code, reference it directly
-claude
-> Read the SKILL.md file at ~/downloads/container-isolation/SKILL.md and use it to set up container isolation for this project
-```
-
-### Activating the Skill
-
-After installation, restart Claude Code to load the skill:
-
-```bash
-# If Claude Code is running, exit and restart
-# The skill will be automatically available
-
-# Navigate to your project
-cd /path/to/your/project
-
 # Start Claude Code
 claude
 
-# The skill is now available - Claude will use it when appropriate
-> Set up container isolation for this project
+# Add the marketplace
+/plugin marketplace add penguinmd/claude-container-isolation-marketplace
+
+# Install the plugin
+/plugin install container-isolation@container-isolation-marketplace
 ```
 
 ### Verifying Installation
 
-Check if the skill is properly installed:
+After installation, verify everything is working:
 
 ```bash
-# Check personal skills
-ls -la ~/.claude/skills/container-isolation/SKILL.md
+# Check plugin is installed
+ls -la ~/.claude/plugins/cache/container-isolation/
 
-# Or check project skills
-ls -la .claude/skills/container-isolation/SKILL.md
+# Start Claude Code
+claude
+
+# Try the command (should show an interactive menu)
+/container-isolation:container
+
+# Check plugin list
+/plugin list
 ```
 
 ### Updating
 
-To update to the latest version:
+The plugin automatically checks for updates on each Claude Code session start. To manually update:
 
 ```bash
-# For personal skills
-cd ~/.claude/skills/container-isolation
-git pull origin main
+# In Claude Code
+/plugin update container-isolation
 
-# Or for project skills
-cd /path/to/your/project/.claude/skills/container-isolation
-git pull origin main
-
-# Restart Claude Code to load updates
+# Or reinstall
+curl -sSL https://raw.githubusercontent.com/penguinmd/claude-container-isolation/main/install.sh | bash
 ```
+
+### Uninstalling
+
+To completely remove the plugin:
+
+```bash
+curl -sSL https://raw.githubusercontent.com/penguinmd/claude-container-isolation/main/uninstall.sh | bash
+```
+
+Or manually:
+
+```bash
+# In Claude Code
+/plugin uninstall container-isolation
+```
+
+**Note:** This will NOT remove containers from your projects. To remove containers, run `./scripts/container destroy` in each project first.
 
 ## Quick Start
 
@@ -196,7 +164,7 @@ cd /path/to/your/project
 
 ```bash
 claude
-> /container
+> /container-isolation:container
 ```
 
 ### 3. Select Your Action
