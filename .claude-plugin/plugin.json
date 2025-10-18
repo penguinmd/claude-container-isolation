@@ -22,6 +22,6 @@
   "requirements": {
     "os": ["darwin"],
     "architecture": ["arm64"],
-    "minVersion": "macOS 26.0"
+    "minVersion": "macOS 15.0"
   }
 }
