@@ -1,6 +1,6 @@
 # Configuration Guide
 
-> **Note:** This skill uses **Apple Container** (macOS 26+, Apple Silicon). While this documentation may reference "Docker" in examples and explanations, all commands should use the `container` CLI instead of `docker` CLI (e.g., `container run` instead of `container run`). Apple Container uses OCI-compatible images and command syntax similar to Docker.
+> **Note:** This skill uses **Apple Container** (macOS 26+, Apple Silicon). All commands use the `container` CLI (e.g., `container run`, `container exec`, `container build`). Apple Container is OCI-compatible and supports standard container image formats.
 
 This guide covers the configuration file schema, customization options, and advanced settings for the Container Isolation skill.
 
