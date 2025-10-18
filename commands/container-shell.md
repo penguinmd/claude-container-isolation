@@ -1,3 +1,7 @@
+---
+description: Enter an interactive shell session in the container
+---
+
 Enter an interactive shell session in the container isolation environment.
 
 Look for the container management script at `./scripts/container` and run the shell command.

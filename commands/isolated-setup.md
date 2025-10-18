@@ -1,3 +1,7 @@
+---
+description: Set up a secure, isolated development environment using container technology
+---
+
 Read and execute the Container Isolation skill to set up a secure, isolated development environment for this project.
 
 Use the SKILL.md file located at: ${CLAUDE_PLUGIN_ROOT}/SKILL.md

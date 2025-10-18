@@ -1,3 +1,7 @@
+---
+description: Check the status of the container isolation environment
+---
+
 Check the status of the container isolation environment for this project.
 
 Look for the container management script at `./scripts/container` and run the status command.

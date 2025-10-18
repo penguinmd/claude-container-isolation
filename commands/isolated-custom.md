@@ -1,3 +1,7 @@
+---
+description: Set up a Custom mode container with user-specified configuration
+---
+
 Read and execute the Container Isolation skill to set up a Custom mode environment for this project.
 
 Use the SKILL.md file located at: ${CLAUDE_PLUGIN_ROOT}/SKILL.md

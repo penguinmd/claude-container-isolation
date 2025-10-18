@@ -1,3 +1,7 @@
+---
+description: Set up a Development mode container with minimal restrictions
+---
+
 Read and execute the Container Isolation skill to set up a Development mode environment for this project.
 
 Use the SKILL.md file located at: ${CLAUDE_PLUGIN_ROOT}/SKILL.md

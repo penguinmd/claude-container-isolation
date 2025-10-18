@@ -1,3 +1,7 @@
+---
+description: Stop the running container isolation environment
+---
+
 Stop the running container isolation environment for this project.
 
 Look for the container management script at `./scripts/container` and run the stop command.

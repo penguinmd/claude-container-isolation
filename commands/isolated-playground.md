@@ -1,3 +1,7 @@
+---
+description: Set up a maximum security Playground mode container environment
+---
+
 Read and execute the Container Isolation skill to set up a Playground mode environment for this project.
 
 Use the SKILL.md file located at: ${CLAUDE_PLUGIN_ROOT}/SKILL.md
