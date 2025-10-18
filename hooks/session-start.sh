@@ -75,7 +75,7 @@ cat <<EOF
 {
   "hookSpecificOutput": {
     "hookEventName": "SessionStart",
-    "additionalContext": "${update_escaped}**Container Isolation Skill Available**\n\nSkill: ${skill_name_escaped}\nDescription: ${skill_description_escaped}\nWhen to use: ${when_to_use_escaped}\n\n**Slash commands available:**\n- /isolated-setup - Interactive setup (choose mode)\n- /isolated-playground - Quick Playground mode setup (max security)\n- /isolated-dev - Quick Development mode setup (trusted code)\n- /isolated-custom - Custom mode setup (full configuration)\n- /container-status - Check container status\n- /container-shell - Enter container shell\n- /container-stop - Stop container\n\n**Skill location:** ${PLUGIN_ROOT}/SKILL.md"
+    "additionalContext": "${update_escaped}**Container Isolation Skill Available**\n\nSkill: ${skill_name_escaped}\nDescription: ${skill_description_escaped}\nWhen to use: ${when_to_use_escaped}\n\n**Slash command:** /container - Manage isolated container environments (setup, status, shell, stop)\n\n**Skill location:** ${PLUGIN_ROOT}/SKILL.md"
   }
 }
 EOF

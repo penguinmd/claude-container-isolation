@@ -80,8 +80,8 @@ Install directly from the Claude Code plugin marketplace:
 
 ```bash
 # In Claude Code
-/plugin marketplace add penguinmd/claude-container-isolation
-/plugin install container-isolation@penguinmd/claude-container-isolation
+/plugin marketplace add penguinmd/claude-container-isolation-marketplace
+/plugin install container-isolation@container-isolation-marketplace
 ```
 
 That's it! The skill will be automatically available in all your projects.
@@ -192,16 +192,23 @@ git pull origin main
 cd /path/to/your/project
 ```
 
-### 2. Run the Skill
+### 2. Run the Container Command
 
 ```bash
 claude
-> /isolated-dev-setup
+> /container
 ```
 
-### 3. Choose a Mode
+### 3. Select Your Action
 
-The skill will ask you to select one of three modes:
+The command will present an interactive menu with these options:
+
+- **Set up new environment** - Create a new isolated container (choose Playground/Development/Custom mode)
+- **Check status** - View current container status
+- **Open shell** - Enter an interactive shell session
+- **Stop container** - Stop the running container
+
+If setting up a new environment, you'll be asked to select one of three modes:
 
 - **Playground Mode** (Maximum Security) - For untrusted code
 - **Development Mode** (Minimal Restrictions) - For trusted projects
@@ -448,7 +455,7 @@ root@container:/workspace# cat ~/.config/claude/mcp-config.json
 │                                       ↓                     │
 │                      ┌────────────────────────────┐         │
 │                      │   Skill Execution          │         │
-│                      │   /isolated-dev-setup      │         │
+│                      │   /container               │         │
 │                      └────────────────────────────┘         │
 │                                       │                     │
 │                                       ↓                     │
@@ -654,7 +661,7 @@ cd claude-container-isolation
 # Test the skill
 cd /path/to/test/project
 claude
-> /isolated-dev-setup
+> /container
 ```
 
 ### Testing
