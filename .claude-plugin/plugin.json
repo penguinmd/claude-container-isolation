@@ -1,15 +1,13 @@
 {
   "name": "container-isolation",
-  "version": "1.0.0",
   "description": "Create secure, isolated development environments using Apple Container technology for safe Claude Code execution",
+  "version": "1.0.0",
   "author": {
     "name": "penguinmd",
     "email": "myfourkids@gmail.com"
   },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/penguinmd/claude-container-isolation.git"
-  },
+  "homepage": "https://github.com/penguinmd/claude-container-isolation",
+  "repository": "https://github.com/penguinmd/claude-container-isolation",
   "license": "MIT",
   "keywords": [
     "container",
@@ -18,10 +16,5 @@
     "apple-container",
     "development-environment",
     "sandbox"
-  ],
-  "requirements": {
-    "os": ["darwin"],
-    "architecture": ["arm64"],
-    "minVersion": "macOS 15.0"
-  }
+  ]
 }
