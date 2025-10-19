@@ -76,13 +76,16 @@ cmd_start() {
     check_container_cli
 
     # Check if container already exists and is running
-    if container ps | grep -q "$CONTAINER_NAME"; then
-        log_warn "Container '$CONTAINER_NAME' is already running"
-        return 0
+    if container list 2>/dev/null | grep -q "$CONTAINER_NAME"; then
+        local state=$(container list 2>/dev/null | grep "$CONTAINER_NAME" | awk '{print $5}')
+        if [[ "$state" == "running" ]]; then
+            log_warn "Container '$CONTAINER_NAME' is already running"
+            return 0
+        fi
     fi
 
     # Check if container exists but is stopped
-    if container ps -a | grep -q "$CONTAINER_NAME"; then
+    if container list 2>/dev/null | grep -q "$CONTAINER_NAME"; then
         log_info "Starting existing container..."
         container start "$CONTAINER_NAME" || {
             log_error "Failed to start container"
@@ -94,6 +97,21 @@ cmd_start() {
 
     # Build image if needed
     build_image_if_needed
+
+    # Check for corrupted container metadata
+    # This can happen if a previous creation failed partway through
+    if ! container list 2>/dev/null | grep -q "$CONTAINER_NAME"; then
+        local container_dir="$HOME/Library/Application Support/com.apple.container/containers/$CONTAINER_NAME"
+        if [[ -d "$container_dir" ]]; then
+            log_warn "Detected corrupted container metadata, cleaning up..."
+            rm -rf "$container_dir" 2>/dev/null || {
+                log_error "Failed to clean up corrupted container data. Please run:"
+                log_error "  rm -rf \"$container_dir\""
+                exit 1
+            }
+            log_info "Corrupted metadata cleaned up"
+        fi
+    fi
 
     # Create and start new container
     log_info "Creating new container..."
@@ -159,10 +177,20 @@ cmd_start() {
 cmd_shell() {
     check_container_cli
 
-    if ! container ps | grep -q "$CONTAINER_NAME"; then
-        log_error "Container '$CONTAINER_NAME' is not running"
+    # Check if container exists and is running
+    if container list 2>/dev/null | grep -q "$CONTAINER_NAME"; then
+        local state=$(container list 2>/dev/null | grep "$CONTAINER_NAME" | awk '{print $5}')
+        if [[ "$state" != "running" ]]; then
+            log_error "Container '$CONTAINER_NAME' is not running (state: $state)"
+            echo ""
+            echo "Start the container first:"
+            echo "  $0 start"
+            exit 1
+        fi
+    else
+        log_error "Container '$CONTAINER_NAME' does not exist"
         echo ""
-        echo "Start the container first:"
+        echo "Create the container first:"
         echo "  $0 start"
         exit 1
     fi
@@ -174,8 +202,15 @@ cmd_shell() {
 cmd_stop() {
     check_container_cli
 
-    if ! container ps | grep -q "$CONTAINER_NAME"; then
-        log_warn "Container '$CONTAINER_NAME' is not running"
+    # Check if container exists and is running
+    if container list 2>/dev/null | grep -q "$CONTAINER_NAME"; then
+        local state=$(container list 2>/dev/null | grep "$CONTAINER_NAME" | awk '{print $5}')
+        if [[ "$state" != "running" ]]; then
+            log_warn "Container '$CONTAINER_NAME' is not running (state: $state)"
+            return 0
+        fi
+    else
+        log_warn "Container '$CONTAINER_NAME' does not exist"
         return 0
     fi
 
@@ -194,14 +229,15 @@ cmd_status() {
     echo "Image: $IMAGE_NAME"
     echo ""
 
-    if container ps -a | grep -q "$CONTAINER_NAME"; then
-        if container ps | grep -q "$CONTAINER_NAME"; then
+    if container list 2>/dev/null | grep -q "$CONTAINER_NAME"; then
+        local state=$(container list 2>/dev/null | grep "$CONTAINER_NAME" | awk '{print $5}')
+        if [[ "$state" == "running" ]]; then
             echo -e "Status: ${GREEN}●${NC} Running"
         else
-            echo -e "Status: ${YELLOW}●${NC} Stopped"
+            echo -e "Status: ${YELLOW}●${NC} Stopped (state: $state)"
         fi
         echo ""
-        container ps -a | grep "$CONTAINER_NAME" || true
+        container list 2>/dev/null | grep "$CONTAINER_NAME" || true
     else
         echo -e "Status: ${RED}●${NC} Not created"
     fi
@@ -229,13 +265,16 @@ cmd_destroy() {
     fi
 
     # Stop if running
-    if container ps | grep -q "$CONTAINER_NAME"; then
-        log_info "Stopping container..."
-        container stop "$CONTAINER_NAME" 2>/dev/null || true
+    if container list 2>/dev/null | grep -q "$CONTAINER_NAME"; then
+        local state=$(container list 2>/dev/null | grep "$CONTAINER_NAME" | awk '{print $5}')
+        if [[ "$state" == "running" ]]; then
+            log_info "Stopping container..."
+            container stop "$CONTAINER_NAME" 2>/dev/null || true
+        fi
     fi
 
     # Remove container
-    if container ps -a | grep -q "$CONTAINER_NAME"; then
+    if container list 2>/dev/null | grep -q "$CONTAINER_NAME"; then
         log_info "Removing container..."
         container rm "$CONTAINER_NAME" || {
             log_error "Failed to remove container"

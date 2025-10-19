@@ -79,5 +79,6 @@ WORKDIR ${HOME}
 # Switch to non-root user
 USER ${USER}
 
-# Default command
-CMD ["/bin/bash"]
+# Default command - keep container running for detached mode
+# Use tail instead of bash so container doesn't exit when run with -d flag
+CMD ["tail", "-f", "/dev/null"]
